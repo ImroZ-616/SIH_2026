@@ -40,9 +40,9 @@
 
 ## Day 2 — Feature Representations
 
-- [ ] Compare raw waveform vs spectrogram vs MFCC vs log-mel
+- [x] Compare raw waveform vs spectrogram vs MFCC vs log-mel
 
-- [ ] Understand why raw audio isn't always the best model input
+- [x] Understand why raw audio isn't always the best model input
 
 ## Day 3 — Feature Visualization (team milestone)
 
