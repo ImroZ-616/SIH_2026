@@ -46,7 +46,7 @@
 
 ## Day 3 — Feature Visualization (team milestone)
 
-- [ ] Take R1's MFCC output and visualize keyword / unknown / silence classes
+- [x] Take R1's MFCC output and visualize keyword / unknown / silence classes
 
 - [ ] Answer: can the keyword visually separate itself from other classes?
 
