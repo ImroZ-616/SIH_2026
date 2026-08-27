@@ -3,19 +3,18 @@ venv/
 .venv/
 env/
 
-# Python Cache & Artifacts
+# Python Cache & Bytecode
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
 .pytest_cache/
 
-# Dataset Audio & Archives (Large Audio Files Ignored, Docs & Structure Tracked)
+# Audio Dataset Archives & Binary Audio
 dataset/*
 !dataset/README.md
 !dataset/**/.gitkeep
 !dataset/**/README.md
-dataset/**/
 *.wav
 *.mp3
 *.ogg
@@ -23,7 +22,7 @@ dataset/**/
 *.tar.gz
 *.zip
 
-# Generated Outputs & Cache
+# Generated Outputs, Cache & Logs
 cache/
 outputs/
 logs/
@@ -31,7 +30,7 @@ logs/
 !outputs/.gitkeep
 !logs/.gitkeep
 
-# Large Trained Models & Checkpoints
+# Trained Models & Checkpoints
 models/*.h5
 models/*.keras
 models/*.tflite
