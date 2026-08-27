@@ -25,7 +25,7 @@
 - [x] **Output:** working ESP32 → serial monitor program
 
 ## Day 2 — MCU Constraints
-- [ ] Build a comparison table: ESP8266 vs ESP32 vs ESP32-S3 vs Raspberry Pi (RAM, Flash, suitability)
+- [x] Build a comparison table: ESP8266 vs ESP32 vs ESP32-S3 vs Raspberry Pi (RAM, Flash, suitability)
 
 ## Day 3 — Feasibility Research
 - [ ] Research whether the chosen MFCC implementation can eventually run efficiently on an MCU
