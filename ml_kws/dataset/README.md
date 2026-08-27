@@ -1,4 +1,4 @@
-﻿# SIH 26172 — ML/KWS Dataset Documentation (Phase 2)
+﻿# SIH 26172 — ML/KWS Dataset Documentation
 
 **Component:** R2 — ML/KWS Dataset Repository  
 **Audio Standard:** 16,000 Hz (16 kHz), 16-bit PCM, 1.0 second duration, Mono WAV  
@@ -12,8 +12,8 @@ The Keyword Spotting (KWS) system classifies incoming audio windows into 3 prima
 
 ```
 dataset/
-├── keyword/           # Class 1: Target wake word ('ASTRA')
-├── unknown/           # Class 2: Non-keyword English speech words
+├── keyword/           # Class 1: Target wake word ('ASTRA') - To be recorded by team
+├── unknown/           # Class 2: Non-keyword English speech words (Speech Commands v0.01)
 ├── silence/           # Class 3: Ambient background noise and quiet room audio
 └── negative_test/     # Benchmark: Phonetically challenging negative examples
 ```

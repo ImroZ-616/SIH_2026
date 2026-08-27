@@ -1,7 +1,7 @@
-﻿'''
+﻿"""
 SIH 26172 - R2 ML/KWS Model Configuration
-Central project path definitions and settings structure using pathlib.Path.
-'''
+Central project path definitions and audio standardization settings using pathlib.Path.
+"""
 
 from pathlib import Path
 
@@ -25,7 +25,14 @@ UNKNOWN_DIR = DATASET_DIR / "unknown"
 SILENCE_DIR = DATASET_DIR / "silence"
 NEGATIVE_TEST_DIR = DATASET_DIR / "negative_test"
 
-# Project Directories List (for automated validation / initialization)
+# Audio Standardization Constants
+TARGET_SAMPLE_RATE = 16000     # 16 kHz sample rate (Standard for KWS & Speech)
+TARGET_DURATION = 1.0          # Target audio duration in seconds
+TARGET_SAMPLES = int(TARGET_SAMPLE_RATE * TARGET_DURATION)  # 16000 samples per clip
+TARGET_CHANNELS = 1            # Mono (Single channel)
+AUDIO_NORM_EPSILON = 1e-8      # Small epsilon to prevent division by zero during normalization
+
+# Project Directories List
 ALL_DIRECTORIES = [
     DATASET_DIR,
     KEYWORD_DIR,
@@ -43,7 +50,7 @@ ALL_DIRECTORIES = [
 
 
 def ensure_directories():
-    '''Ensures all required project directories exist on disk.'''
+    """Ensures all required project directories exist on disk."""
     for directory in ALL_DIRECTORIES:
         directory.mkdir(parents=True, exist_ok=True)
 
@@ -52,18 +59,15 @@ if __name__ == "__main__":
     print("=" * 60)
     print("SIH 26172 - ML/KWS Configuration")
     print("=" * 60)
-    print(f"PROJECT_ROOT      : {PROJECT_ROOT}")
-    print(f"DATASET_DIR       : {DATASET_DIR}")
-    print(f"  - KEYWORD_DIR   : {KEYWORD_DIR}")
-    print(f"  - UNKNOWN_DIR   : {UNKNOWN_DIR}")
-    print(f"  - SILENCE_DIR   : {SILENCE_DIR}")
-    print(f"  - NEGATIVE_TEST : {NEGATIVE_TEST_DIR}")
-    print(f"MODELS_DIR        : {MODELS_DIR}")
-    print(f"OUTPUTS_DIR       : {OUTPUTS_DIR}")
-    print(f"CACHE_DIR         : {CACHE_DIR}")
-    print(f"LOGS_DIR          : {LOGS_DIR}")
-    print(f"NOTEBOOKS_DIR     : {NOTEBOOKS_DIR}")
-    print(f"SCRIPTS_DIR       : {SCRIPTS_DIR}")
-    print(f"VENV_DIR          : {VENV_DIR}")
+    print(f"PROJECT_ROOT        : {PROJECT_ROOT}")
+    print(f"DATASET_DIR         : {DATASET_DIR}")
+    print(f"  - KEYWORD_DIR     : {KEYWORD_DIR}")
+    print(f"  - UNKNOWN_DIR     : {UNKNOWN_DIR}")
+    print(f"  - SILENCE_DIR     : {SILENCE_DIR}")
+    print(f"  - NEGATIVE_TEST   : {NEGATIVE_TEST_DIR}")
+    print(f"TARGET_SAMPLE_RATE  : {TARGET_SAMPLE_RATE} Hz")
+    print(f"TARGET_DURATION     : {TARGET_DURATION} s")
+    print(f"TARGET_SAMPLES      : {TARGET_SAMPLES} samples")
+    print(f"TARGET_CHANNELS     : {TARGET_CHANNELS} (Mono)")
     print("=" * 60)
-    print("All paths configured properly.")
+    print("All paths and audio constants configured properly.")

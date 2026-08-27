@@ -3,7 +3,7 @@
 **Project:** SIH 26172  
 **Role:** R2 — ML/KWS Engineer  
 **Component:** Keyword Spotting (KWS) Neural Network Model  
-**Current Phase:** Phase 2 — Dataset Download & Organization  
+**Current Phase:** Phase 3 — Audio Loading & Preprocessing  
 
 ---
 
@@ -13,7 +13,8 @@ The ML/KWS (Machine Learning / Keyword Spotting) module is a core sub-system of 
 
 Key responsibilities of this component include:
 - Curating balanced acoustic datasets (target keyword, unknown speech words, ambient silence/noise, and hard negatives).
-- Transforming raw audio waveforms into 2D time-frequency acoustic representations (MFCCs / Mel-Frequency Cepstral Coefficients).
+- Standardizing raw audio into a consistent, robust representation (16 kHz, Mono, 1.0s, Normalized).
+- Transforming waveforms into 2D time-frequency acoustic representations (MFCCs).
 - Designing, training, and evaluating lightweight Convolutional Neural Networks (CNNs).
 - Rigorously testing against false positives and acoustic hard negatives.
 - Enabling live microphone wake-word inference.
@@ -44,7 +45,8 @@ D:\SIH\ml_kws\
 │   └── README.md               # Dataset metadata, licensing & collection docs
 │
 ├── src/                        # Core source code modules
-│   └── config.py               # Central project path definitions & configuration
+│   ├── config.py               # Central project path definitions & audio standards
+│   └── audio.py                # Audio loading, resampling, normalization & padding
 │
 ├── models/                     # Saved model architectures and weights (.h5, .tflite)
 ├── outputs/                    # Visualizations, confusion matrices, evaluation plots
@@ -52,7 +54,9 @@ D:\SIH\ml_kws\
 ├── scripts/                    # Standalone utility & automation scripts
 │   ├── download_speech_commands.py  # Dataset downloader & organizer
 │   ├── record_keyword.py            # Interactive CLI tool for recording 'ASTRA'
-│   └── validate_dataset.py          # Dataset audio integrity & count validator
+│   ├── validate_dataset.py          # Dataset audio integrity & count validator
+│   ├── inspect_audio.py             # Raw audio dataset property inspector
+│   └── test_audio.py                # Audio preprocessing validation suite
 │
 ├── logs/                       # Training logs & execution traces
 ├── cache/                      # Precomputed MFCC arrays & cached archives
@@ -69,8 +73,8 @@ D:\SIH\ml_kws\
 | Phase | Description | Status |
 | :--- | :--- | :--- |
 | **PHASE 1** | **Environment & ML Project Setup** | **COMPLETED** |
-| **PHASE 2** | **Dataset Download & Organization** | **IN PROGRESS** |
-| **PHASE 3** | Audio Loading & Preprocessing | NOT STARTED |
+| **PHASE 2** | **Dataset Download & Organization** | **PARTIALLY COMPLETED** *(Awaiting custom 'ASTRA' recordings)* |
+| **PHASE 3** | **Audio Loading & Preprocessing** | **COMPLETED** |
 | **PHASE 4** | MFCC Feature Extraction | NOT STARTED |
 | **PHASE 5** | MFCC Visualization | NOT STARTED |
 | **PHASE 6** | Dataset Splitting & Preparation | NOT STARTED |
@@ -85,35 +89,37 @@ D:\SIH\ml_kws\
 
 ---
 
-## 5. Dataset Architecture & Specifications
+## 5. Audio Standardization & Preprocessing Architecture
 
-### Audio Format Standards
-- **Sample Rate:** 16,000 Hz (16 kHz)
-- **Bit Depth:** 16-bit Linear PCM
-- **Channels:** 1 (Mono)
-- **Clip Duration:** 1.0 second (16,000 samples)
-- **Container:** Standard `.wav` (RIFF header)
+### Standard Audio Specifications
+- **Target Sample Rate:** `16,000 Hz` (16 kHz)
+- **Target Channels:** `1` (Mono)
+- **Target Duration:** `1.0 second`
+- **Target Sample Count:** `16,000 samples`
+- **Data Type:** `numpy.float32` (normalized values in $[-1.0, 1.0]$)
 
-### Dataset Classes & Sources
-1. **KEYWORD (`dataset/keyword/`):**
-   - **Target Keyword:** "ASTRA"
-   - **Source:** Genuine audio samples recorded directly using `scripts/record_keyword.py`.
-   - **Collection Diversity:** Multiple speakers, varied microphones (laptop internal, USB, headset), variable speaking speeds (normal, fast, slow), varying volumes (quiet, normal, loud), and different ambient noise conditions.
-   - **Baseline Target:** 50–100 samples across 2–4 speakers.
-2. **UNKNOWN (`dataset/unknown/`):**
-   - **Source:** Google Speech Commands v0.01 ([CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)).
-   - **Vocabulary:** 30 distinct spoken English words (*yes, no, up, down, left, right, on, off, stop, go, zero, one, two, three, four, five, six, seven, eight, nine, bed, bird, cat, dog, happy, house, marvin, sheila, tree, wow*).
-3. **SILENCE (`dataset/silence/`):**
-   - **Source:** Google Speech Commands `_background_noise_` tracks (*running tap, pink noise, white noise, dishwashing, exercise bike*) sliced into 1.0s chunks + synthetic near-silence.
-4. **NEGATIVE_TEST (`dataset/negative_test/`):**
-   - **Source:** Curated Speech Commands words and team-collected acoustic hard negatives (*extra, astro, aster, master, pasta*, coughing, clapping). Used strictly for post-training false-activation benchmarking.
+### The Preprocessing Pipeline (`src/audio.py`)
+```
+Raw WAV File / Stream
+         ↓
+load_audio()          --> Decodes WAV / FLAC / MP3 into float32 array
+         ↓
+to_mono()             --> Averages stereo / multi-channel audio to 1D mono
+         ↓
+resample_audio()      --> Polyphase / Soxr HQ resampler to 16,000 Hz
+         ↓
+normalize_audio()     --> Peak normalization (preserves silence below threshold)
+         ↓
+pad_or_trim()         --> Centers short audio or center-crops long audio to 16,000 samples
+         ↓
+Standardized Waveform --> Shape: (16000,), Dtype: float32 (Ready for MFCC Extraction)
+```
 
 ---
 
-## 6. Phase 2 Progress Details
+## 6. Preprocessing Verification Summary
 
-- [x] Download & extraction script [`scripts/download_speech_commands.py`](file:///D:/SIH/ml_kws/scripts/download_speech_commands.py) developed and executed.
-- [x] Custom keyword recorder [`scripts/record_keyword.py`](file:///D:/SIH/ml_kws/scripts/record_keyword.py) created.
-- [x] Dataset validation suite [`scripts/validate_dataset.py`](file:///D:/SIH/ml_kws/scripts/validate_dataset.py) created.
-- [x] Dataset metadata & licensing documented in [`dataset/README.md`](file:///D:/SIH/ml_kws/dataset/README.md).
-- [x] Zero ML models built, zero MFCC extraction performed.
+- [x] Tested on **9 real audio files** sampled randomly across `dataset/unknown/`, `dataset/silence/`, and `dataset/negative_test/`.
+- [x] Tested on **5 synthetic edge cases** (0.5s short, 1.8s long, 2-channel stereo, 44.1 kHz non-standard sample rate, and near-zero silence).
+- [x] All test cases resulted in exactly **16,000 float32 samples**, strictly mono, with valid amplitude boundaries $[-1.0, 1.0]$ and zero NaNs/Infs.
+- [x] **Overall Validation Result:** `PASS`
