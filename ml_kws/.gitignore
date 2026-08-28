@@ -1,0 +1,50 @@
+﻿# Virtual Environment
+venv/
+.venv/
+env/
+
+# Python Cache & Bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+
+# Audio Dataset Archives & Binary Audio
+dataset/*
+!dataset/README.md
+!dataset/**/.gitkeep
+!dataset/**/README.md
+*.wav
+*.mp3
+*.ogg
+*.flac
+*.tar.gz
+*.zip
+
+# Generated Outputs, Cache & Logs
+cache/
+outputs/
+logs/
+!cache/.gitkeep
+!outputs/.gitkeep
+!logs/.gitkeep
+
+# Trained Models & Checkpoints
+models/*.h5
+models/*.keras
+models/*.tflite
+models/*.pkl
+models/*.onnx
+models/*.pt
+models/*.pth
+!models/.gitkeep
+
+# Jupyter Notebook Checkpoints
+.ipynb_checkpoints/
+
+# OS & Editor specific files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

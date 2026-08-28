@@ -5,27 +5,27 @@
 ---
 
 ## Day 1 — Shared Foundation (everyone)
-- [ ] Can explain what KWS (Keyword Spotting) is
-- [ ] Can explain what TinyML is
-- [ ] Can explain why we don't just send everything to the cloud (latency, bandwidth, privacy, power, cost)
-- [ ] Understand the full pipeline: Mic → PCM → Feature extraction → KWS → Wake event → Buffer → Network → ASR
+- [x] Can explain what KWS (Keyword Spotting) is
+- [x] Can explain what TinyML is
+- [x] Can explain why we don't just send everything to the cloud (latency, bandwidth, privacy, power, cost)
+- [x] Understand the full pipeline: Mic → PCM → Feature extraction → KWS → Wake event → Buffer → Network → ASR
 
 ## Day 1 — Role-specific (don't train models yet)
-- [ ] Microcontroller vs Raspberry Pi
-- [ ] RAM vs Flash
-- [ ] Inference (concept)
-- [ ] TensorFlow Lite
-- [ ] TensorFlow Lite Micro
-- [ ] INT8 quantization
-- [ ] Research: ESP32-S3 + TensorFlow Lite Micro
-- [ ] Understand: Normal ML (laptop → large model) vs TinyML (MCU → tiny model → limited RAM/CPU)
-- [ ] Install Arduino IDE or PlatformIO
-- [ ] Install ESP32 board support
-- [ ] (Optional) experiment with ESP8266 — but do NOT make it the final target
-- [ ] **Output:** working ESP32 → serial monitor program
+- [x] Microcontroller vs Raspberry Pi
+- [x] RAM vs Flash
+- [x] Inference (concept)
+- [x] TensorFlow Lite
+- [x] TensorFlow Lite Micro
+- [x] INT8 quantization
+- [x] Research: ESP32-S3 + TensorFlow Lite Micro
+- [x] Understand: Normal ML (laptop → large model) vs TinyML (MCU → tiny model → limited RAM/CPU)
+- [x] Install Arduino IDE or PlatformIO(#adruino)
+- [x] Install ESP32 board support
+- [x] (Optional) experiment with ESP8266 — but do NOT make it the final target(nope)
+- [x] **Output:** working ESP32 → serial monitor program
 
 ## Day 2 — MCU Constraints
-- [ ] Build a comparison table: ESP8266 vs ESP32 vs ESP32-S3 vs Raspberry Pi (RAM, Flash, suitability)
+- [x] Build a comparison table: ESP8266 vs ESP32 vs ESP32-S3 vs Raspberry Pi (RAM, Flash, suitability)
 
 ## Day 3 — Feasibility Research
 - [ ] Research whether the chosen MFCC implementation can eventually run efficiently on an MCU

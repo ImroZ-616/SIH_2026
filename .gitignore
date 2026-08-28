@@ -1,0 +1,57 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Python tooling
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Environment / secrets
+.env
+.env.*
+
+# Datasets
+data/raw/*
+data/processed/*
+
+# ML checkpoints
+models/checkpoints/*
+*.ckpt
+*.pth
+*.pt
+*.h5
+
+# Generated models
+models/tflite/*
+models/quantized/*
+
+# Audio recordings
+*.wav
+*.mp3
+*.flac
+*.m4a
+
+# Logs
+*.log
+
+# Benchmark outputs
+benchmarks/**/results/*
