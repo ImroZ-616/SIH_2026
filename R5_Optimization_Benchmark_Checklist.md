@@ -5,25 +5,25 @@
 ---
 
 ## Day 1 — Shared Foundation (everyone)
-- [ ] Can explain what KWS (Keyword Spotting) is
-- [ ] Can explain what TinyML is
-- [ ] Can explain why we don't just send everything to the cloud (latency, bandwidth, privacy, power, cost)
-- [ ] Understand the full pipeline: Mic → PCM → Feature extraction → KWS → Wake event → Buffer → Network → ASR
+- [x ] Can explain what KWS (Keyword Spotting) is
+- [x ] Can explain what TinyML is
+- [x ] Can explain why we don't just send everything to the cloud (latency, bandwidth, privacy, power, cost)
+- [x ] Understand the full pipeline: Mic → PCM → Feature extraction → KWS → Wake event → Buffer → Network → ASR
 
 ## Day 1 — Role-specific
-- [ ] Accuracy
-- [ ] Precision
-- [ ] Recall
+- [x ] Accuracy
+- [x ] Precision
+- [x ] Recall
 - [ ] F1 score
-- [ ] False Acceptance Rate (FAR)
-- [ ] False Rejection Rate (FRR)
+- [x ] False Acceptance Rate (FAR)
+- [x ] False Rejection Rate (FRR)
 - [ ] Inference latency
-- [ ] CPU utilization
-- [ ] RAM
-- [ ] Flash
-- [ ] Power
+- [x ] CPU utilization
+- [x ] RAM
+- [x ] Flash
+- [x ] Power
 - [ ] Research: MLPerf Tiny — Keyword Spotting
-- [ ] Understand why accuracy alone is not enough (accuracy + latency + memory + energy)
+- [x ] Understand why accuracy alone is not enough (accuracy + latency + memory + energy)
 - [ ] Create initial benchmark spreadsheet (Accuracy, False accepts/hour, Inference latency, RAM, Flash, CPU, Power)
 - [ ] **Output:** `benchmark.csv`
 
