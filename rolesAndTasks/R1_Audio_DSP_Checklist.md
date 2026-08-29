@@ -5,19 +5,19 @@
 ---
 
 ## Day 1 — Shared Foundation (everyone)
-- [ ] Can explain what KWS (Keyword Spotting) is
-- [ ] Can explain what TinyML is
-- [ ] Can explain why we don't just send everything to the cloud (latency, bandwidth, privacy, power, cost)
-- [ ] Understand the full pipeline: Mic → PCM → Feature extraction → KWS → Wake event → Buffer → Network → ASR
+- [x] Can explain what KWS (Keyword Spotting) is
+- [x] Can explain what TinyML is
+- [x] Can explain why we don't just send everything to the cloud (latency, bandwidth, privacy, power, cost)
+- [x] Understand the full pipeline: Mic → PCM → Feature extraction → KWS → Wake event → Buffer → Network → ASR
 
 ## Day 1 — Role-specific
-- [ ] Sampling & sample rate
-- [ ] PCM (Pulse Code Modulation)
-- [ ] Amplitude
-- [ ] Bit depth
-- [ ] Mono vs stereo
-- [ ] Nyquist theorem
-- [ ] Understand: 16,000 samples/sec → speech waveform
+- [x] Sampling & sample rate
+- [x] PCM (Pulse Code Modulation)
+- [x] Amplitude
+- [x] Bit depth
+- [x] Mono vs stereo
+- [x] Nyquist theorem
+- [x] Understand: 16,000 samples/sec → speech waveform
 - [ ] Install: Python, librosa, numpy, matplotlib, sounddevice
 - [ ] Record your own voice
 - [ ] Visualize waveform
