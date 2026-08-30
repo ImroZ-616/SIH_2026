@@ -5,20 +5,20 @@
 ---
 
 ## Day 1 — Shared Foundation (everyone)
-- [ ] Can explain what KWS (Keyword Spotting) is
-- [ ] Can explain what TinyML is
-- [ ] Can explain why we don't just send everything to the cloud (latency, bandwidth, privacy, power, cost)
-- [ ] Understand the full pipeline: Mic → PCM → Feature extraction → KWS → Wake event → Buffer → Network → ASR
+- [x] Can explain what KWS (Keyword Spotting) is
+- [x] Can explain what TinyML is
+- [x] Can explain why we don't just send everything to the cloud (latency, bandwidth, privacy, power, cost)
+- [x] Understand the full pipeline: Mic → PCM → Feature extraction → KWS → Wake event → Buffer → Network → ASR
 
 ## Day 1 — Role-specific
-- [ ] Git / GitHub workflow
-- [ ] Python environments
-- [ ] Project structure best practices
-- [ ] APIs (concept)
-- [ ] System architecture (concept)
-- [ ] requirements.txt / dependency management
-- [ ] Testing basics
-- [ ] Create the repository skeleton:
+- [x] Git / GitHub workflow
+- [x] Python environments
+- [x] Project structure best practices
+- [x] APIs (concept)
+- [x] System architecture (concept)
+- [x] requirements.txt / dependency management
+- [x] Testing basics
+- [x] Create the repository skeleton:
   ```
   edge-voice-activator/
   ├── audio/
@@ -33,13 +33,13 @@
   ├── tests/
   └── docs/
   ```
-- [ ] Create `README.md`
-- [ ] Create `architecture.md`
-- [ ] Create `requirements.txt`
-- [ ] **Output:** clean GitHub repo with everyone assigned to their branch/module
+- [x] Create `README.md`
+- [x] Create `architecture.md`
+- [x] Create `requirements.txt`
+- [x] **Output:** clean GitHub repo with everyone assigned to their branch/module
 
 ## Day 2 — Architecture Diagram
-- [ ] Create a common team-wide architecture diagram
+- [x] Create a common team-wide architecture diagram
 
 ## Day 3 — Pipeline Integration (team milestone)
 - [ ] Integrate R1's audio/MFCC work and R2's feature visualization into one pipeline
