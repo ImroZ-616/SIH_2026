@@ -19,10 +19,10 @@
 - [x] Nyquist theorem
 - [x] Understand: 16,000 samples/sec → speech waveform
 - [x] Install: Python, librosa, numpy, matplotlib, sounddevice
-- [ ] Record your own voice
-- [ ] Visualize waveform
-- [ ] Visualize spectrogram
-- [ ] **Output:** `audio_basics.ipynb` (mic recording + waveform + spectrogram)
+- [x] Record your own voice
+- [x] Visualize waveform
+- [x] Visualize spectrogram
+- [x] **Output:** `audio_basics.ipynb` (mic recording + waveform + spectrogram)
 
 ## Day 2 — Framing & FFT
 - [ ] Framing
