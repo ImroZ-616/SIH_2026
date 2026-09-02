@@ -3,6 +3,7 @@ import websockets
 import wave
 import os
 import sys
+import json
 
 sys.path.append(
     os.path.abspath(
@@ -16,7 +17,9 @@ HOST = "0.0.0.0"
 PORT = 5050
 
 AUDIO_FILE = "received_audio.wav"
+
 asr = ASR()
+
 
 def save_wav(audio_data):
     with wave.open(AUDIO_FILE, "wb") as wav:
@@ -56,6 +59,15 @@ async def handle_client(websocket):
 
                         print("Transcription:")
                         print(text)
+
+                        response = {
+                            "type": "transcription",
+                            "text": text
+                        }
+
+                        await websocket.send(
+                            json.dumps(response)
+                        )
 
             elif isinstance(message, bytes):
 
