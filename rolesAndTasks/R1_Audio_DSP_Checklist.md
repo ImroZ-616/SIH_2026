@@ -18,7 +18,7 @@
 - [x] Mono vs stereo
 - [x] Nyquist theorem
 - [x] Understand: 16,000 samples/sec → speech waveform
-- [ ] Install: Python, librosa, numpy, matplotlib, sounddevice
+- [x] Install: Python, librosa, numpy, matplotlib, sounddevice
 - [ ] Record your own voice
 - [ ] Visualize waveform
 - [ ] Visualize spectrogram

@@ -11,15 +11,15 @@
 - [ ] Understand the full pipeline: Mic → PCM → Feature extraction → KWS → Wake event → Buffer → Network → ASR
 
 ## Day 1 — Role-specific
-- [ ] HTTP basics
-- [ ] WebSocket basics
-- [ ] TCP basics
-- [ ] Streaming audio concepts
-- [ ] ASR (Automatic Speech Recognition) concept
-- [ ] Understand target architecture: ESP32 → WebSocket → Python server → ASR → Text
-- [ ] Build a simple Python client → WebSocket → Python server (no ESP32 yet)
-- [ ] Research open-source ASR options: Whisper / faster-whisper, Vosk, others
-- [ ] **Output:** working pipeline — audio file → server → ASR → text
+- [x] HTTP basics
+- [x] WebSocket basics
+- [x] TCP basics
+- [x] Streaming audio concepts
+- [x] ASR (Automatic Speech Recognition) concept
+- [x] Understand target architecture: ESP32 → WebSocket → Python server → ASR → Text
+- [x] Build a simple Python client → WebSocket → Python server (no ESP32 yet)
+- [x] Research open-source ASR options: Whisper / faster-whisper, Vosk, others
+- [x] **Output:** working pipeline — audio file → server → ASR → text
 
 ## Day 2 — Audio Formats
 - [ ] Study PCM

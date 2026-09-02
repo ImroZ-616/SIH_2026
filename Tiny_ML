@@ -1,0 +1,104 @@
+# TinyML - SIH 26172
+
+## Role
+**R3 - TinyML Embedded**
+
+This module is responsible for deploying the custom Keyword Spotting (KWS)
+model on an ESP32 under the SIH resource constraints.
+
+## Objective
+
+Build an efficient TinyML inference pipeline:
+
+```text
+Trained KWS Model
+        ↓
+TensorFlow Lite
+        ↓
+INT8 Quantization
+        ↓
+TFLite Micro
+        ↓
+ESP32
+        ↓
+Keyword Detection
+        ↓
+Trigger Audio Streaming
+```
+
+## Responsibilities
+
+- ESP32 development and firmware
+- TensorFlow Lite model conversion
+- INT8 quantization
+- TensorFlow Lite Micro deployment
+- Tensor arena / RAM management
+- Flash footprint optimization
+- Inference-time optimization
+- Embedded benchmarking
+- Integration with the KWS and networking modules
+
+## SIH Constraints
+
+| Metric | Target |
+|---|---|
+| RAM | < 256 KB |
+| Idle CPU usage | < 10% |
+| Keyword detection | High true-positive rate |
+| False activations | Near zero |
+| Detection-to-stream latency | As low as possible |
+
+## Directory Structure
+
+```text
+Tiny_ML/
+├── README.md
+├── esp32/
+│   ├── hello_esp32/
+│   │   └── hello_esp32.ino
+│   └── memory_test/
+│       └── memory_test.ino
+├── model_conversion/
+│   └── README.md
+├── tflite_micro/
+│   └── README.md
+└── benchmarks/
+    └── README.md
+```
+
+## Current Status
+
+- [x] ESP32 serial communication test
+- [ ] ESP32 memory measurement
+- [ ] Receive trained KWS model from R2
+- [ ] Convert model to TFLite
+- [ ] INT8 quantization
+- [ ] Validate quantized model
+- [ ] Deploy with TFLite Micro
+- [ ] Measure RAM and Flash
+- [ ] Measure inference time and CPU usage
+- [ ] Integrate keyword detection with audio streaming
+
+## Interface With Other Roles
+
+**R1 - Audio DSP**
+- Provides audio format / feature requirements.
+
+**R2 - ML/KWS**
+- Provides the trained custom-keyword model.
+- Provides model input shape, preprocessing details, and class labels.
+
+**R4 - Networking & ASR**
+- Receives the keyword-detected trigger from the ESP32.
+- Handles subsequent audio streaming and ASR.
+
+**R5 - Optimization / Benchmarking**
+- Uses TinyML measurements for final performance evaluation.
+
+**R6 - Integration**
+- Integrates the complete edge-to-cloud pipeline.
+
+## Important Rule
+
+The ESP32 should perform only lightweight local keyword spotting.
+Cloud transmission should begin **after** the custom keyword is detected.
