@@ -102,3 +102,20 @@ Tiny_ML/
 
 The ESP32 should perform only lightweight local keyword spotting.
 Cloud transmission should begin **after** the custom keyword is detected.
+
+
+
+## R3 Audio Preprocessing
+
+Current reference audio configuration:
+
+- Sample rate: 16 kHz
+- Channels: Mono
+- Sample format: int16 PCM
+- Frame length: 30 ms (480 samples)
+- Hop length: 10 ms (160 samples)
+- Window: Hann
+
+> Note: FFT, Mel bands, MFCC count, normalization and model
+> input shape are not finalized yet and will be aligned with
+> the final KWS training pipeline.
