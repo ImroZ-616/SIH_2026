@@ -8,7 +8,7 @@ import sounddevice as sd
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(PROJECT_ROOT / "ml_kws" / "src"))
 
-from audio import preprocess_audio
+from audio_preprocessing import preprocess_audio
 
 
 SAMPLE_RATE = 16000
