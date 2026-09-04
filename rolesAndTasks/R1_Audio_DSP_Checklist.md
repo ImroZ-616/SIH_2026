@@ -25,7 +25,7 @@
 - [x] **Output:** `audio_basics.ipynb` (mic recording + waveform + spectrogram)
 
 ## Day 2 — Framing & FFT
-- [ ] Framing
+- [x] Framing
 - [ ] Windowing
 - [ ] FFT (Fast Fourier Transform)
 - [ ] Spectrogram generation
