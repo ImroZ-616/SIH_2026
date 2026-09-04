@@ -17,7 +17,9 @@ class ASR:
 
     def transcribe(self, audio_file):
 
-        segments, info = self.model.transcribe(audio_file)
+        segments, info = self.model.transcribe(
+            audio_file
+        )
 
         text = ""
 
