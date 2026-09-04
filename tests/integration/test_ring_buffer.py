@@ -56,3 +56,69 @@ print("\nExpected:")
 print("Samples stored:", MAX_SAMPLES)
 print("First sample:", SAMPLE_RATE)
 print("Last sample:", SAMPLE_RATE * 2 - 1)
+
+# SLIDING_WINDOW
+# import numpy as np
+
+
+# class SlidingWindow:
+#     """
+#     Generates overlapping audio windows from a continuous
+#     stream of PCM audio.
+
+#     Example:
+#         Sample rate = 16000 Hz
+#         Window = 1 second
+#         Hop = 100 ms
+
+#         Window 1: samples 0      - 15999
+#         Window 2: samples 1600   - 17599
+#         Window 3: samples 3200   - 19199
+#     """
+
+#     def __init__(
+#         self,
+#         window_size: int,
+#         hop_size: int
+#     ):
+#         self.window_size = window_size
+#         self.hop_size = hop_size
+
+#         self.total_samples = 0
+#         self.next_window_end = window_size
+
+#     def add(self, samples: np.ndarray):
+#         """
+#         Inform the sliding window that new samples
+#         have arrived.
+
+#         Returns True if a new window is ready.
+#         """
+
+#         samples = np.asarray(samples)
+
+#         self.total_samples += len(samples)
+
+#         return self.total_samples >= self.next_window_end
+
+#     def window_ready(self):
+#         """
+#         Check whether a new complete window is ready.
+#         """
+
+#         return (
+#             self.total_samples >=
+#             self.next_window_end
+#         )
+
+#     def advance(self):
+#         """
+#         Move the sliding window forward by hop_size.
+#         """
+
+#         if not self.window_ready():
+#             return False
+
+#         self.next_window_end += self.hop_size
+
+#         return True
