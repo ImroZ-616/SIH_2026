@@ -26,20 +26,20 @@
 
 ## Day 2 — Framing & FFT
 - [x] Framing
-- [ ] Windowing
-- [ ] FFT (Fast Fourier Transform)
-- [ ] Spectrogram generation
-- [ ] Implement: audio → spectrogram (code)
+- [x] Windowing
+- [x] FFT (Fast Fourier Transform)
+- [x] Spectrogram generation
+- [x] Implement: audio → spectrogram (code)
 
 ## Day 3 — MFCC Pipeline (team milestone)
-- [ ] Pre-emphasis
-- [ ] Framing
-- [ ] Windowing
-- [ ] FFT
-- [ ] Mel filterbank
-- [ ] Log
-- [ ] DCT
-- [ ] Implement full pipeline: Audio → Pre-emphasis → Framing → Window → FFT → Mel filterbank → Log → DCT → MFCC
+- [x] Pre-emphasis
+- [x] Framing
+- [x] Windowing
+- [x] FFT
+- [x] Mel filterbank
+- [x] Log
+- [x] DCT
+- [x] Implement full pipeline: Audio → Pre-emphasis → Framing → Window → FFT → Mel filterbank → Log → DCT → MFCC
 
 ## Day 4 — Support R2
 - [ ] Help optimize feature extraction speed/quality for the CNN pipeline
