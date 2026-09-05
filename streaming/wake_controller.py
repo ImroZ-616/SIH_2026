@@ -4,7 +4,7 @@ from streaming.buffer import AudioRingBuffer
 class WakeController:
 
     def __init__(self, buffer_seconds=1, sample_rate=16000):
-        max_samples = buffer_seconds * sample_rate
+        max_samples = int(buffer_seconds * sample_rate)
 
         self.ring_buffer = AudioRingBuffer(max_samples)
 
@@ -13,6 +13,10 @@ class WakeController:
     def process_audio(self, samples):
         """
         Receive continuous microphone PCM audio.
+
+        Audio is always added to the ring buffer.
+        If streaming has already started, the current
+        audio chunk is returned for transmission.
         """
 
         self.ring_buffer.add(samples)
@@ -22,9 +26,33 @@ class WakeController:
 
         return None
 
+    def handle_kws_result(self, detected):
+        """
+        Handle the output of the KWS detector.
+
+        Parameters
+        ----------
+        detected : bool
+            True when the wake word is detected.
+
+        Returns
+        -------
+        numpy.ndarray or None
+            Buffered audio when wake is detected,
+            otherwise None.
+        """
+
+        if detected and not self.streaming:
+            return self.wake_detected()
+
+        return None
+
     def wake_detected(self):
         """
         Called when KWS detects the wake word.
+
+        Enables streaming and returns the audio currently
+        stored in the ring buffer.
         """
 
         print("[WAKE] Wake word detected")

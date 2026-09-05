@@ -44,7 +44,7 @@ print("Ring buffer samples:", len(controller.ring_buffer))
 
 print("\n[2] Simulating KWS wake event...")
 
-buffered_audio = controller.wake_detected()
+buffered_audio = controller.handle_kws_result(True)
 
 print(
     "Buffered audio samples:",
