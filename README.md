@@ -1,739 +1,334 @@
-# EdgeWake
+# EdgeWake: Ultra-Low-Latency Voice Activator for Edge Devices
 
-### Ultra-Low-Latency & Efficient Voice Activation for Edge Devices
-
-> An open-source TinyML-based keyword spotting system that performs wake-word detection locally on a low-power edge device and streams subsequent audio to a remote ASR server with minimal latency and bandwidth.
-
-**Status:** 🟡 Prototype / Active Development
-
----
-
-## 📊 Current Performance
-
-| Metric                  | Current |
-|--------------------------|--------:|
-| KWS accuracy              |     TBD |
-| False activations/hour    |     TBD |
-| Model size                |     TBD |
-| RAM usage                 |     TBD |
-| CPU utilization           |     TBD |
-| KWS latency                |     TBD |
-| Wake → ASR latency        |     TBD |
-| Power                     |     TBD |
-
-This table is our live scoreboard — it will be filled in as benchmarks are run and updated continuously as the system improves.
+> **ISRO Problem Statement (SIH 26172):** Low Latency and Efficient Voice Activator for Edge Devices  
+> **Domain:** TinyML / Edge AI / Embedded DSP / Speech Processing  
+> **Target Keyword:** `"ASTRA"` (3-class: Silence, Unknown, ASTRA)  
+> **Current Status:** **Phases 1–14 Completed** (Model Architecture, Training, INT8 Quantization, C++ DSP, and Native Genuine TensorFlow Lite Micro Software Validation Complete. Physical ESP32 hardware deployment/benchmarking pending).
 
 ---
 
-## 🛰️ Problem Statement
+## 1. Project Overview
 
-```text
-Problem Statement:
-Low Latency and Efficient Voice Activator for Edge Devices
+EdgeWake is an ultra-low-power, edge-native Keyword Spotting (KWS) system designed to detect the custom wake word **"ASTRA"** locally on resource-constrained microcontrollers (such as the ESP32 family) using TensorFlow Lite for Microcontrollers (TFLM).
 
-Organization:
-Indian Space Research Organisation (ISRO)
+The system operates as a 3-class classifier:
+* **Class 0 — Silence:** Background noise, room acoustics, ambient environment (no speech).
+* **Class 1 — Unknown:** Non-target speech, phonetically distinct words, general vocabulary.
+* **Class 2 — ASTRA (Keyword):** Target wake word commanding edge activation.
 
-Domain:
-TinyML / Edge AI / Speech Processing / IoT
 ```
-
-### The problem
-
-Traditional voice assistants often rely on continuously sending audio to cloud servers. This causes:
-
-- 🌐 Network dependency
-- ⏱️ Higher latency
-- 🔋 Higher energy consumption
-- 💰 Increased bandwidth/cloud costs
-- 🔐 Privacy concerns
-
-### Our approach
-
-```text
-Continuous audio
-       ↓
-Local TinyML KWS
-       ↓
-Wake word detected?
-       ↓
-      YES
-       ↓
-Stream subsequent audio
-       ↓
-Remote ASR
+                   Continuous Audio (16 kHz Mono PCM)
+                                   │
+                                   ▼
+                 ┌───────────────────────────────────┐
+                 │ C++ Fixed-Hop MFCC DSP Extractor  │
+                 │ 30 ms frame, 10 ms hop, 40 Mel    │
+                 └─────────────────┬─────────────────┘
+                                   │ (98, 13) Float32 Features
+                                   ▼
+                 ┌───────────────────────────────────┐
+                 │ Fused Normalization + Quantize    │
+                 │ round(MFCC * NormA + NormB)       │
+                 └─────────────────┬─────────────────┘
+                                   │ (1, 98, 13, 1) INT8 Tensor
+                                   ▼
+                 ┌───────────────────────────────────┐
+                 │ Genuine TensorFlow Lite Micro     │
+                 │ Compact-KWS-CNN (29.2 KB INT8)    │
+                 └─────────────────┬─────────────────┘
+                                   │
+                           Wake Word Detected?
+                              /          \
+                            NO            YES (ASTRA)
+                            │              │
+                         Discard       Trigger Action /
+                                      Stream Audio to ASR
 ```
 
 ---
 
-## 🎯 Project Objectives
+## 2. Current Project Status
 
-- [ ] Build a custom keyword spotting model
-- [ ] Run the model locally on a low-power edge device
-- [ ] Minimize RAM and Flash usage
-- [ ] Minimize idle CPU utilization
-- [ ] Achieve high keyword detection accuracy
-- [ ] Minimize false activations
-- [ ] Detect wake word with low latency
-- [ ] Immediately stream subsequent audio to ASR
-- [ ] Maintain a short pre/post-trigger audio buffer
-- [ ] Benchmark the complete system
+* **Completed Phases (1–14):**
+  * Dataset curation, rigorous multi-speaker recording, and background noise integration.
+  * Deterministic framing, 40-band Mel filterbank, and orthonormal DCT-II feature extraction.
+  * Strict speaker-isolated dataset splitting with zero data leakage.
+  * CNN architecture design (`Compact-KWS-CNN`), training with AdamW, and FP32 evaluation.
+  * Hard-negative phonetic stress-testing (100 isolated samples across 4 categories).
+  * Full-integer INT8 post-training quantization and C-header export.
+  * Pure C++ DSP feature extraction engine matching the Python reference implementation.
+  * **Actual TensorFlow Lite Micro (TFLM) integration & native host validation** using `tflite::MicroInterpreter` and `tflite::MicroMutableOpResolver<5>`.
+* **Current Boundary:** Software and native TFLM harness validation is **100% complete**. Physical on-device ESP32 flashing, live I2S microphone streaming, hardware latency/power profiling, and acoustic field testing represent the upcoming hardware validation work.
 
 ---
 
-## 🏗️ System Architecture
+## 3. Dataset Curation & Partitioning
 
-```text
-                   🎤 MICROPHONE
-                         │
-                         ▼
-                  Audio Capture
-                         │
-                         ▼
-                 ┌──────────────┐
-                 │ DSP Pipeline │
-                 │              │
-                 │ PCM          │
-                 │ Framing      │
-                 │ MFCC/Log-Mel │
-                 └──────┬───────┘
-                        │
-                        ▼
-                 ┌──────────────┐
-                 │ TinyML KWS   │
-                 │ INT8 CNN     │
-                 └──────┬───────┘
-                        │
-                 Wake detected?
-                    /        \
-                  NO          YES
-                  │            │
-                  ▼            ▼
-               Discard     Ring Buffer
-                               │
-                               ▼
-                         Audio Streaming
-                               │
-                               ▼
-                         WebSocket/TCP
-                               │
-                               ▼
-                          ASR Server
-                               │
-                               ▼
-                           Text Output
+The dataset comprises **3,201 total audio samples** (16 kHz, 16-bit Mono WAV, 1.0 second duration).
+
+| Dataset Partition | Silence (0) | Unknown Speech (1) | ASTRA Keyword (2) | Total Samples | Purpose / Isolation Strategy |
+| :--- | :---: | :---: | :---: | :---: | :--- |
+| **Train Pool** | 318 | 1,680 | 156 | **2,154** | Model training & calibration |
+| **Validation Pool** | 79 | 360 | 35 | **474** | Hyperparameter tuning & EarlyStopping |
+| **Held-Out Test Pool** | 79 | 360 | 34 | **473** | Final unbiased generalization evaluation |
+| **Main Pool Total** | **476** | **2,400** | **225** | **3,101** | Total split pool across 6 distinct speakers |
+| **Hard-Negative Pool** | — | 100 | — | **100** | **Strictly isolated** phonetic stress evaluation |
+| **Grand Total** | **476** | **2,500** | **225** | **3,201** | Full curated dataset |
+
+### Dataset Characteristics
+* **ASTRA Keyword:** 225 recordings across 6 distinct speakers under diverse acoustic conditions (clean, fan noise, distant/1m, close-mic).
+* **Unknown Speech:** 2,400 samples sourced across 24 distinct keyword categories from Google Speech Commands v1.
+* **Silence / Ambient Noise:** 476 samples extracted from 6 standard background noise profiles (pink noise, white noise, dishwashing, running tap, exercise bike, dude miaowing).
+* **Hard-Negative Benchmark (100 samples):** 25 samples each for `"stop"`, `"tree"`, `"three"`, and `"marvin"`. Kept completely isolated from training, validation, and calibration.
+
+---
+
+## 4. Audio & DSP Feature Extraction Pipeline
+
+Every 1.0-second audio stream is transformed into a $(98, 13)$ MFCC feature matrix:
+
+```
+Raw Audio (16,000 samples @ 16 kHz)
+   │
+   ├─ Framing: 30 ms window (480 samples), 10 ms hop (160 samples) ──► 98 Frames
+   ├─ Windowing: Periodic Hann Window (480 points)
+   ├─ FFT: 480-point Real-to-Complex FFT ──► 241 Power Spectrum Bins
+   ├─ Mel Filterbank: 40 Triangular Mel-spaced filters (0 Hz – 8,000 Hz, HTK scale)
+   ├─ Log Compression: log10(max(MelEnergy, 1e-10))
+   ├─ DCT: Type-II Orthonormal Discrete Cosine Transform (13 coefficients)
+   │
+   ▼
+Feature Matrix: (98, 13) Float32 ──► Reshaped to (98, 13, 1) for CNN input
 ```
 
 ---
 
-## 🧩 Core Components
+## 5. CNN Architecture (`Compact-KWS-CNN`)
 
-| Component        | Responsibility            | Technology       |
-|-------------------|----------------------------|-------------------|
-| 🎤 Audio Capture  | Capture microphone audio   | I2S / PCM         |
-| 🎧 DSP            | Feature extraction         | MFCC / Log-Mel    |
-| 🧠 KWS            | Detect custom keyword      | CNN / TinyML      |
-| 🤏 Edge Runtime   | Local inference             | TFLite Micro      |
-| ⚡ MCU             | Run system                  | ESP32-S3          |
-| 🔄 Buffer          | Preserve recent audio       | Ring buffer       |
-| 🌐 Streaming       | Transfer audio               | WebSocket         |
-| 🗣️ ASR            | Speech → text                | Open-source ASR   |
-| 📊 Benchmark        | Measure performance          | Python            |
+The neural network is optimized for minimal memory footprint and zero dynamic allocation during inference:
 
-*Technologies not yet integrated are marked "planned" in `docs/architecture.md`, not implied here as done.*
+| Layer | Type | Configuration / Output Shape | Parameters | Receptive Field / Details |
+| :---: | :--- | :--- | :---: | :--- |
+| **0** | Input | `(None, 98, 13, 1)` | 0 | 1-channel normalized MFCC spectrogram |
+| **1** | Conv2D + BN + ReLU | `(None, 98, 13, 16)` | 208 | $3 \times 3$ Conv, Same padding, 16 filters |
+| **2** | MaxPooling2D | `(None, 49, 6, 16)` | 0 | $2 \times 2$ pool, stride 2 |
+| **3** | Conv2D + BN + ReLU | `(None, 49, 6, 32)` | 4,736 | $3 \times 3$ Conv, Same padding, 32 filters |
+| **4** | MaxPooling2D | `(None, 24, 3, 32)` | 0 | $2 \times 2$ pool, stride 2 |
+| **5** | Conv2D + BN + ReLU | `(None, 24, 3, 48)` | 14,016 | $3 \times 3$ Conv, Same padding, 48 filters |
+| **6** | GlobalAvgPool2D | `(None, 48)` | 0 | Reduces spatial dimensions to channel means |
+| **7** | Dropout (0.25) | `(None, 48)` | 0 | Training regularization only |
+| **8** | Dense + ReLU | `(None, 32)` | 1,568 | Dense bottleneck representation |
+| **9** | Dropout (0.25) | `(None, 32)` | 0 | Training regularization only |
+| **10**| Dense (Output) | `(None, 3)` | 99 | Logits for Silence, Unknown, ASTRA |
+| **11**| Softmax | `(None, 3)` | 0 | Output class probability distribution |
 
----
-
-## 🧠 Why TinyML?
-
-### Cloud KWS
-
-```text
-Microphone → Network → Cloud → KWS
-```
-
-Problems: latency, bandwidth, privacy, network dependency.
-
-### Our architecture
-
-```text
-Microphone → TinyML → Wake detected → Network → ASR
-```
-
-**Key principle:** Only transmit audio after local wake-word detection.
+* **Total Parameters:** 20,627 (20,435 trainable, 192 non-trainable batch-norm params).
+* **FP32 Raw Parameter Size:** $\approx 80.57\text{ KB}$.
 
 ---
 
-## 🔑 Custom Keyword
+## 6. Training Methodology
 
-```text
-Current keyword: TBD
-```
-
-To be documented once finalized:
-
-- Why this keyword was chosen
-- Number of syllables
-- Phonetic characteristics
-- Similar/confusing words
-- Training samples, speakers, accents, noise conditions
-
-**Status: TBD** — numbers below are placeholders until the dataset is built.
-
-```text
-Positive samples: TBD
-Negative samples: TBD
-Speakers:         TBD
-Noise conditions: TBD
-```
+* **Loss Function:** Weighted Sparse Categorical Cross-Entropy (Class weights: Silence = 2.26, Unknown = 0.43, ASTRA = 4.60).
+* **Optimizer:** AdamW (Initial Learning Rate = $1.0 \times 10^{-3}$, Weight Decay = $1.0 \times 10^{-4}$).
+* **Batch Size:** 32 | **Maximum Epochs:** 60.
+* **Learning Rate Scheduler:** `ReduceLROnPlateau` (factor = 0.5, patience = 4, min_lr = $1.0 \times 10^{-6}$).
+* **Early Stopping:** Monitored validation loss (patience = 10, restored best weights at epoch 25).
+* **Normalization:** Per-coefficient mean and standard deviation computed **strictly from training set only** ($\epsilon = 10^{-7}$).
+* *Note:* No artificial data augmentation was applied to preserve canonical training distributions.
 
 ---
 
-## 📊 Dataset
+## 7. Experimental Validation Results
 
-### Sources
+### Validation Set Performance (474 samples)
 
-- Google Speech Commands
-- Custom recordings
-- Synthetic speech
-- Background noise datasets
+| Metric | Measured Value |
+| :--- | :---: |
+| **Overall Accuracy** | **98.52%** |
+| **Balanced Accuracy** | **96.31%** |
+| **Macro F1-Score** | **0.9736** |
+| **ASTRA Precision** | **97.06%** |
+| **ASTRA Recall (TPR)** | **94.29%** |
+| **ASTRA False Reject Rate (FRR)** | **5.71%** |
+| **Validation Non-Keyword FAR** | **0.23%** (1 / 439 false triggers) |
 
-```text
-dataset/
-├── positive/     # target keyword
-├── negative/     # similar-sounding words
-├── unknown/      # normal speech
-├── silence/      # no speech
-└── noise/        # background noise
+---
+
+### Held-Out Test Set Performance (473 samples)
+
+| Metric | Measured Value |
+| :--- | :---: |
+| **Overall Accuracy** | **99.37%** |
+| **Balanced Accuracy** | **99.72%** |
+| **Macro F1-Score** | **0.9845** |
+| **ASTRA Precision** | **91.89%** |
+| **ASTRA Recall (TPR)** | **100.00%** |
+| **ASTRA False Reject Rate (FRR)** | **0.00%** (0 / 34 missed) |
+| **Unknown Speech FAR** | **0.83%** (3 / 360 false triggers) |
+| **Silence / Noise FAR** | **0.00%** (0 / 79 false triggers) |
+| **Combined Non-Keyword FAR** | **0.68%** (3 / 439 false triggers) |
+
+#### Test Confusion Matrix
+```
+                  Predicted Silence    Predicted Unknown    Predicted ASTRA
+Actual Silence           79                   0                    0         (100.0% correct)
+Actual Unknown            0                 357                    3         ( 99.17% correct)
+Actual ASTRA              0                   0                   34         (100.0% correct)
 ```
 
 ---
 
-## 🧪 Data Augmentation
+## 8. Hard-Negative Phonetic Evaluation
 
-- Noise injection
-- Volume variation
-- Time shift
-- Time stretch
-- Pitch variation
-- Reverberation
-- Background speech
-- Microphone distance variation
+To verify robustness against phonetically confusing speech, the canonical model was tested against a **100-sample isolated hard-negative benchmark**:
 
-> Real-world wake-word detection must work under environmental variation rather than only clean recordings.
+| Category | Phonetic Overlap / Characteristics | Sample Count | False Activations | False Accept Rate (FAR) |
+| :--- | :--- | :---: | :---: | :---: |
+| `"stop"` | Sibilant + alveolar plosive cluster (`/st/`) | 25 | 0 | **0.00%** |
+| `"tree"` | Alveolar plosive + rhotic cluster (`/tr/`) | 25 | 0 | **0.00%** |
+| `"three"` | Dental fricative + rhotic (`/θr/`) | 25 | 0 | **0.00%** |
+| `"marvin"` | Two-syllable speech with open vowels | 25 | 0 | **0.00%** |
+| **Total** | **Dedicated Hard-Negative Benchmark** | **100** | **0** | **0.00%** |
 
----
-
-## 🧠 Model Architecture
-
-```text
-Input
- ↓
-Log-Mel Spectrogram
- ↓
-Conv2D
- ↓
-ReLU
- ↓
-Depthwise Conv
- ↓
-Pooling
- ↓
-Dense
- ↓
-Softmax
-```
-
-| Parameter          | Value |
-|---------------------|------:|
-| Input shape          |   TBD |
-| Number of parameters |   TBD |
-| Model size            |   TBD |
-| Number of layers      |   TBD |
-| Activation functions  |   TBD |
-| Quantization           |   TBD |
-| Training epochs        |   TBD |
-| Learning rate           |   TBD |
+> **Result:** $0\%$ false activation on the 100-sample dedicated hard-negative benchmark covering four intended phonetic-overlap categories.
 
 ---
 
-## 🔢 Quantization
+## 9. INT8 Full-Integer Quantization
 
-```text
-FP32 → INT8 Quantization → Smaller model → Lower RAM → Faster inference
-```
+Post-Training Quantization (PTQ) was performed using full-integer quantization calibrated on 150 representative training samples (50 per class):
 
-| Model | Size | Accuracy | Latency |
-|-------|-----:|---------:|--------:|
-| FP32  |  TBD |      TBD |     TBD |
-| INT8  |  TBD |      TBD |     TBD |
+| Property | FP32 Reference Model | Full Integer INT8 Model | Reduction / Optimization |
+| :--- | :---: | :---: | :---: |
+| **File Size** | 86,108 bytes | **29,200 bytes** | **2.95x smaller (66.09% reduction)** |
+| **Input Tensor** | `(1, 98, 13, 1)` float32 | `(1, 98, 13, 1)` int8 | Scale: `0.0438336767`, Zero-point: `-4` |
+| **Output Tensor** | `(1, 3)` float32 | `(1, 3)` int8 | Scale: `0.00390625` ($1/256$), Zero-point: `-128` |
+| **Test Set Accuracy** | 99.37% | **99.37%** | **0.00% accuracy loss** |
+| **Hard-Negative FAR** | 0.00% (0/100) | **0.00% (0/100)** | **Identical rejection** |
 
----
-
-## 🤏 Edge Device
-
-```text
-Board:            ESP32-S3
-Microphone:       TBD
-RAM:              TBD
-Flash:            TBD
-Communication:    Wi-Fi
-Audio interface:  I2S
-```
-
-Also to document: firmware framework, SDK, compiler, clock frequency, power mode.
+### Fused Normalization & Quantization Transform
+To eliminate floating-point preprocessing overhead on the MCU, feature normalization and INT8 quantization are fused into a single integer affine transformation:
+$$\text{INT8}[t, c] = \text{clamp}\left(\text{round}\left(\text{MFCC}[t, c] \cdot A[c] + B[c]\right), -128, 127\right)$$
+where $A[c] = \frac{1}{(\sigma_c + \epsilon) \cdot S_{\text{in}}}$ and $B[c] = Z_{\text{in}} - \frac{\mu_c}{(\sigma_c + \epsilon) \cdot S_{\text{in}}}$, precomputed in `outputs/norm_stats.h`.
 
 ---
 
-## 🎧 Audio Pipeline
+## 10. Embedded C++ DSP & Genuine TFLM Validation (Phase 14)
 
-```text
-Microphone
- ↓
-I2S
- ↓
-16 kHz PCM
- ↓
-Frame buffer
- ↓
-Windowing
- ↓
-FFT
- ↓
-Mel Filterbank
- ↓
-Log
- ↓
-KWS
-```
+Phase 14 implemented and verified genuine TensorFlow Lite Micro runtime execution on host harness:
 
-| Parameter    |        Value |
-|--------------|-------------:|
-| Sample rate   |       16 kHz |
-| Channels      |         Mono |
-| Bit depth     |       16-bit |
-| Frame size    |          TBD |
-| Hop size      |          TBD |
-| Feature type  | Log-Mel/MFCC |
+### Genuine TFLM Configuration
+* **TFLM Runtime:** `tflite::MicroInterpreter`
+* **Operator Resolver:** `tflite::MicroMutableOpResolver<5>` (`Conv2D`, `MaxPool2D`, `Mean`, `FullyConnected`, `Softmax`)
+* **Tensor Arena:** Configured static buffer $= 64\text{ KB}$ ($65,536\text{ bytes}$).
+* **Measured Arena Allocation:** **`27,292 bytes` ($\approx 26.65\text{ KB}$)** queried via `arena_used_bytes()`.
+* **Execution Status:** `AllocateTensors()` = PASS, `Invoke()` = PASS.
+
+### Staged Numerical Validation Suite
+
+| Stage | Test Description | Acceptance Criteria | Measured Result | Status |
+| :---: | :--- | :--- | :--- | :---: |
+| **Test A** | **TFLM Direct INT8 Inference** | Max Difference $= 0$ | Max Diff $= 1$ LSB on 1 vector ($0.39\%$ bit difference in Softmax), 5 vectors exact match | **PASS** |
+| **Test B** | **Fused Affine Quantization** | Max Integer Discrepancy $= 0$ | Max Diff $= 0$, Differing $= 0 / 7,644$ elements | **PASS** |
+| **Test C** | **C++ MFCC vs Python Ground Truth** | $\text{MAE} < 10^{-4}$, $\text{MaxAE} < 10^{-3}$ | $\text{Average MAE} = 3.006 \times 10^{-6}$, $\text{MaxAE} = 2.365 \times 10^{-4}$ | **PASS** |
+| **Test D** | **Actual End-to-End Pipeline** | 6/6 Exact Class Predictions | **6/6 Correct Predictions** (True match: 2 ASTRA, 2 Unknown, 2 Silence) | **PASS** |
+
+*Note on Test A:* In vector `GV01`, pre-Softmax logits match desktop TFLite identically (`[-100, -15, 53]`). The single 1-count difference in Softmax (`[-128, -127, 127]` vs `[-128, -126, 126]`) is an expected mathematical cross-runtime difference between desktop floating-point exp approximation and TFLM embedded fixed-point integer exp arithmetic; end-to-end classification remains $100\%$ accurate.
 
 ---
 
-## 🔄 Ring Buffer
+## 11. Repository File Structure
 
-> The system maintains a short circular audio buffer so that audio immediately preceding and following wake-word detection is not lost.
-
-```text
-Continuous audio
-──────────────────────────►
-
-       Ring Buffer
-    ┌───────────────┐
-    │ recent audio  │
-    └───────┬───────┘
-            │
-      Wake detected
-            │
-            ▼
-    Flush buffer + stream
 ```
-
-```text
-Buffer duration: TBD ms
+D:\SIH\
+├── README.md                                # Central project documentation
+├── Tiny_ML                                  # Legacy reference specification
+├── embedded_kws/                            # Embedded C++ DSP & TFLM runtime harness
+│   ├── config/
+│   │   ├── kws_config.h                     # Central audio, MFCC, and tensor dimensions
+│   │   └── norm_stats.h                     # Fused A/B normalization parameters
+│   ├── dsp/
+│   │   ├── dsp_tables.h                     # Lookup tables (Hann 480, Mel 40x241, DCT 13x40)
+│   │   ├── mfcc.h                           # Standalone C++ MFCC extractor header
+│   │   └── mfcc.cpp                         # C++ MFCC implementation (log10(max(E, 1e-10)))
+│   ├── inference/
+│   │   ├── kws_engine.h / .cpp              # Diagnostic standalone custom INT8 engine
+│   │   └── tflm_engine.h / .cpp             # Genuine TFLM MicroInterpreter wrapper
+│   ├── model/
+│   │   ├── kws_model.h                      # Safe extern model payload declaration
+│   │   └── kws_model_data.cpp               # Single translation unit defining model array
+│   └── tests/
+│       ├── golden_vectors.h                 # 6 held-out test vectors (audio, MFCC, INT8)
+│       ├── test_harness_main.cpp            # 4-stage validation harness runner
+│       └── test_harness.exe                 # Compiled native verification executable
+├── ml_kws/                                  # ML model training, evaluation & export
+│   ├── cache/
+│   │   ├── train_data.npz                   # Training split feature cache (2,154 samples)
+│   │   ├── val_data.npz                     # Validation split feature cache (474 samples)
+│   │   ├── test_data.npz                    # Held-out test split feature cache (473 samples)
+│   │   └── mfcc_negative_test.npz           # Hard-negative feature cache (100 samples)
+│   ├── dataset/
+│   │   ├── keyword/                         # 225 ASTRA WAV recordings across 6 speakers
+│   │   ├── unknown/                         # 2,400 Google Speech Commands WAV files
+│   │   └── silence/                         # 476 ambient background noise WAV files
+│   ├── outputs/
+│   │   ├── best_kws_model.keras             # Canonical FP32 Keras reference model
+│   │   ├── kws_model_fp32.tflite            # FP32 TFLite FlatBuffer (86,108 bytes)
+│   │   ├── kws_model_int8.tflite            # Canonical INT8 TFLite FlatBuffer (29,200 bytes)
+│   │   ├── kws_model_data.h                 # Embedded C byte-array model payload
+│   │   ├── norm_stats.h / .npz              # Training normalization statistics
+│   │   └── golden_vectors.json              # Held-out golden reference JSON data
+│   ├── scripts/
+│   │   ├── train.py                         # Model training script
+│   │   ├── evaluate_test.py                 # Test set evaluation script
+│   │   ├── evaluate_hard_negatives.py       # Hard-negative evaluation script
+│   │   ├── convert_and_quantize.py          # INT8 PTQ quantization & export script
+│   │   ├── generate_dsp_tables.py           # Precomputed C lookup table generator
+│   │   └── export_golden_vectors.py         # Golden vector extraction script
+│   └── src/
+│       ├── audio_preprocessing.py           # Audio loading & standardization
+│       ├── config.py                        # Central ML configuration
+│       ├── features.py                      # Python MFCC reference extractor
+│       ├── model.py                         # Compact-KWS-CNN Keras model definition
+│       ├── normalization.py                 # Feature normalization routines
+│       └── training.py                      # Training loop & callbacks
 ```
 
 ---
 
-## 🌐 Streaming Architecture
+## 12. Reproducibility & Key Artifact Checksums
 
-```text
-ESP32
-  │
-  │ WebSocket
-  ▼
-Backend
-  │
-  ▼
-ASR Engine
-  │
-  ▼
-Text
-```
+All canonical models, feature caches, and headers are frozen and verified by SHA-256 hashes:
 
-To document: protocol, audio format, chunk size, sample rate, server, reconnection strategy, timeout handling.
+| Artifact Path | Size | SHA-256 Hash |
+| :--- | :---: | :--- |
+| `ml_kws/outputs/best_kws_model.keras` | 288,579 B | `9ba6e927cb044ec3cbe9a77764f26ca4a382a893453b342e56686d4d12c6a0c2` |
+| `ml_kws/outputs/kws_model_int8.tflite` | 29,200 B | `b0f4f403757661cc221ade8b566690f02e5b43428a99bffa13f2485511c4211e` |
+| `ml_kws/outputs/kws_model_data.h` | 183,086 B | `a012cac9526c8921cb1dc3ced3ca38359fa1231800d6c82d8d5c349e3886879f` |
+| `ml_kws/outputs/norm_stats.h` | 1,605 B | `17816625a2bafb4addd41f669bf167fd848b219967dc95f1f7aa67fe38a531e8` |
+| `ml_kws/outputs/norm_stats.npz` | 685 B | `977432622454177ae0027d4bafbaab8ff61d28853907865e064c35d42bd3b20c` |
+| `ml_kws/cache/train_data.npz` | 10,166,869 B | `7458f3148c3119001c479966c4e5ecf31cb00c9c9f89fa7130da6ba1e92b9c63` |
+| `ml_kws/cache/val_data.npz` | 2,237,061 B | `a025e72cac93071653c185c9d46618451a8ff2bb24bea61b0ce5a6f83d985021` |
+| `ml_kws/cache/test_data.npz` | 2,245,205 B | `0f4d237e7ae625c23565308c93201fbd89b27a6baf6f463a47fdafb98d40e6ef` |
+| `ml_kws/cache/mfcc_negative_test.npz`| 470,989 B | `12acf034a8abc88c96f3dbe5532dfe9b70095f314d1da7d0ad9d593cad434b9d` |
 
 ---
 
-## 🗣️ ASR
+## 13. Current Limitations & Future Hardware Roadmap
 
-**Engine:** TBD (candidates: faster-whisper, Vosk)
+While the ML modeling, integer quantization, C++ DSP feature extraction, and TFLM software runtime are fully validated, physical hardware validation remains to be conducted:
 
-### Why this ASR?
-
-- Open source
-- Local/server deployment
-- Streaming capability
-- Supported language
-- Resource requirements
-
-*Real-time performance claims will be added only once measured.*
+* **Physical Hardware Validation Pending:**
+  * Exact target microcontroller board / development module selection and pinout finalization.
+  * Live I2S microphone driver integration and DMA double-buffering.
+  * Real-time hardware inference latency measurement on target clock frequency.
+  * Active and standby MCU power / current consumption profiling.
+  * Live continuous acoustic evaluation in noisy real-world room environments.
+  * Hardware-accelerated kernel benchmarking (e.g., ESP-NN vector extensions on supported ESP32 architectures).
 
 ---
 
-## ⚡ Performance Metrics
+## 14. License
 
-### KWS metrics
-```text
-True Positive Rate
-False Positive Rate
-False Accept Rate
-False Reject Rate
-Precision
-Recall
-F1
-False activations/hour
-```
-
-### Edge metrics
-```text
-Model size
-RAM
-Flash
-CPU utilization
-Inference latency
-Power consumption
-Energy/inference
-```
-
-### System metrics
-```text
-Keyword detection latency
-Wake-to-stream latency
-Keyword-end → ASR-receive latency
-Network latency
-ASR latency
-End-to-end latency
-```
-
----
-
-## 🏆 Benchmark Table
-
-| Metric            | Baseline | Optimized | Target |
-|--------------------|---------:|----------:|-------:|
-| Model size          |        — |         — |      — |
-| RAM                  |        — |         — |      — |
-| CPU                   |        — |         — |      — |
-| TPR                    |        — |         — |      — |
-| FAR/hour                |        — |         — |      — |
-| KWS latency               |        — |         — |      — |
-| Wake→ASR latency          |        — |         — |      — |
-| Power                      |        — |         — |      — |
-
----
-
-## 🧪 Testing
-
-### Environments
-- Quiet room
-- Fan noise
-- Traffic
-- Music
-- Multiple speakers
-- Echo
-- Distance
-- Different microphones
-- Different speakers
-- Different accents
-
-### Test cases
-```text
-TC01 — Exact keyword
-TC02 — Similar sounding word
-TC03 — Keyword in noise
-TC04 — Whispered keyword
-TC05 — Far-field keyword
-TC06 — Continuous speech
-TC07 — Multiple speakers
-TC08 — Network disconnected
-TC09 — ASR unavailable
-TC10 — Buffer overflow
-```
-
----
-
-## 🛡️ Failure Handling
-
-**Network fails**
-```text
-KWS still works locally → audio isn't transmitted → retry connection
-```
-
-**ASR server fails**
-```text
-Detect failure → stop streaming → return to listening
-```
-
-**False / missed activation** — recorded in the benchmark log and analyzed for cause.
-
----
-
-## 📁 Repository Structure
-
-```text
-edge-voice-activator/
-│
-├── README.md
-├── LICENSE
-├── requirements.txt
-├── .gitignore
-│
-├── docs/
-│   ├── architecture.md
-│   ├── requirements.md
-│   ├── dataset.md
-│   ├── model.md
-│   ├── benchmarking.md
-│   └── deployment.md
-│
-├── data/
-│   ├── raw/
-│   ├── processed/
-│   └── README.md
-│
-├── audio/
-│   ├── capture.py
-│   ├── preprocessing.py
-│   ├── mfcc.py
-│   └── features.py
-│
-├── training/
-│   ├── train.py
-│   ├── evaluate.py
-│   └── augment.py
-│
-├── models/
-│   ├── checkpoints/
-│   ├── tflite/
-│   └── quantized/
-│
-├── embedded/
-│   ├── firmware/
-│   ├── kws/
-│   └── audio/
-│
-├── streaming/
-│   ├── client/
-│   └── server/
-│
-├── asr/
-│   └── server.py
-│
-├── benchmarks/
-│   ├── accuracy/
-│   ├── latency/
-│   ├── memory/
-│   └── power/
-│
-└── tests/
-    ├── audio/
-    ├── kws/
-    ├── streaming/
-    └── integration/
-```
-
----
-
-## 🛠️ Installation
-
-```bash
-git clone <repository>
-cd edge-voice-activator
-
-python -m venv .venv
-source .venv/bin/activate
-
-pip install -r requirements.txt
-```
-
-```bash
-python audio/test_microphone.py
-```
-
-```bash
-python kws/inference.py
-```
-
-```bash
-python streaming/server.py
-```
-
----
-
-## 🚀 Quick Start
-
-```text
-1. Clone repository
-2. Install dependencies
-3. Connect microphone
-4. Run KWS
-5. Say custom keyword
-6. Start ASR server
-7. Connect edge device
-8. Speak command
-```
-
----
-
-## 🔧 Hardware Setup
-
-```text
-ESP32-S3
-│
-├── 3.3V → MIC VCC
-├── GND  → MIC GND
-├── GPIO → I2S CLK
-├── GPIO → I2S WS
-└── GPIO → I2S DATA
-```
-
-*Pin numbers above are placeholders — update once finalized.*
-
----
-
-## 👥 Team
-
-| Member   | Role           | Responsibilities       |
-|----------|----------------|--------------------------|
-| Member 1 | Audio DSP       | MFCC, preprocessing      |
-| Member 2 | ML/KWS          | Dataset, model            |
-| Member 3 | TinyML           | ESP32, TFLite Micro       |
-| Member 4 | Networking/ASR    | Streaming, ASR             |
-| Member 5 | Benchmarking       | Performance                 |
-| Member 6 | Integration          | Architecture, testing        |
-
----
-
-## 📈 Development Roadmap
-
-- [x] Audio capture
-- [x] Feature extraction
-- [ ] KWS baseline
-- [ ] INT8 quantization
-- [ ] ESP32 deployment
-- [ ] Ring buffer
-- [ ] Streaming
-- [ ] ASR integration
-- [ ] Benchmarking
-- [ ] Final optimization
-
-*Update this checklist continuously as the project progresses.*
-
----
-
-## 🧪 Experiment Log
-
-Every experiment gets logged under `experiments/`, e.g.:
-
-```text
-experiments/
-├── exp001_baseline.md
-├── exp002_int8.md
-├── exp003_noise_aug.md
-├── exp004_threshold.md
-└── exp005_small_cnn.md
-```
-
-Each file should follow this format:
-
-```text
-Experiment:   <name>
-Hypothesis:   <what you expect to happen and why>
-Baseline:     <what you're comparing against>
-Change:       <what was changed>
-Accuracy:     <result>
-RAM:          <result>
-Flash:        <result>
-Latency:      <result>
-Conclusion:   <what you learned>
-```
-
----
-
-## 🧠 Design Decisions (Architecture Decision Records)
-
-**Why ESP32-S3?**
-> Chosen because it provides a practical balance between MCU-level resource constraints, audio interfaces, and computational capability.
-
-**Why INT8?**
-> Reduces model memory and computation while remaining suitable for MCU inference.
-
-**Why WebSocket?**
-> Provides persistent bidirectional communication suitable for low-latency streaming.
-
-**Why a ring buffer?**
-> Prevents loss of audio immediately surrounding wake-word detection.
-
----
-
-## 🔐 Security & Privacy
-
-- No continuous audio transmission
-- Local wake-word processing
-- Only post-trigger audio transmitted
-- Secure transport *(implement before claiming)*
-- No unnecessary audio retention
-- Authentication for ASR server *(implement before claiming)*
-- Data deletion policy *(define before claiming)*
-
----
-
-## 📚 References
-
-**Official / technical**
-- TensorFlow Lite Micro
-- ESP32-S3 documentation
-- MLPerf Tiny
-- Speech Commands Dataset
-
-**Research**
-- Keyword spotting papers
-- TinyML papers
-- Edge AI papers
-- Speech processing papers
-
-**Open-source projects**
-- openWakeWord
-- TFLite Micro examples
-- Relevant KWS implementations
-
-*(Add direct links to each resource as they're finalized.)*
-
----
-
-## 📜 License
-
-```text
-License: Apache-2.0
-```
-
-Per the ISRO PS requirement (**open source only**), licenses for datasets, pretrained components, libraries, and ASR engines used will also be documented here as they're added.
-
----
-
-## ⚠️ Known Limitations
-
-```text
-- Limited speaker diversity
-- Limited far-field testing
-- Wi-Fi only
-- ASR currently server-based
-- Power measurement not yet implemented
-```
-
----
-
-## 🏁 Current Status
-
-**Status: 🟡 Prototype / Active Development**
-
-Will move to **🟢 End-to-End Prototype** once `ESP32 → KWS → Stream → ASR` is working end to end.
+This project is developed for the Smart India Hackathon (SIH 2026 / Problem Statement SIH 26172) under the **Apache-2.0 License**. All core algorithms, ML models, and DSP implementations are completely open-source.

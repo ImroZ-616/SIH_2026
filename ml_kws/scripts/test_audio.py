@@ -22,7 +22,7 @@ from config import (
     TARGET_DURATION,
     TARGET_SAMPLES,
 )
-from audio import (
+from audio_preprocessing import (
     load_audio,
     to_mono,
     resample_audio,
@@ -30,7 +30,6 @@ from audio import (
     pad_or_trim,
     preprocess_audio,
 )
-
 
 def run_tests():
     print("=" * 80)

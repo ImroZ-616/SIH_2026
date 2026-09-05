@@ -1,4 +1,5 @@
 import asyncio
+import json
 import sounddevice as sd
 import websockets
 
@@ -12,12 +13,14 @@ async def main():
     print("=== EdgeWake R6 Streaming → ASR Test ===")
 
     print("\n[1] Recording microphone...")
+
     audio = sd.rec(
         int(DURATION * SAMPLE_RATE),
         samplerate=SAMPLE_RATE,
         channels=CHANNELS,
         dtype="int16"
     )
+
     sd.wait()
 
     print("[OK] Recording finished")
@@ -29,6 +32,7 @@ async def main():
     print("\n[2] Connecting to R4 WebSocket server...")
 
     async with websockets.connect(SERVER_URL) as websocket:
+
         print("[OK] Connected")
 
         print("\n[3] Sending START...")
@@ -37,7 +41,9 @@ async def main():
         chunk_size = 3200
 
         for i in range(0, len(audio_bytes), chunk_size):
+
             chunk = audio_bytes[i:i + chunk_size]
+
             await websocket.send(chunk)
 
         print("[OK] Audio chunks sent")
@@ -46,6 +52,24 @@ async def main():
         await websocket.send("END")
 
         print("[OK] Stream finished")
+
+        print("\n[5] Waiting for ASR response...")
+
+        response = await websocket.recv()
+
+        data = json.loads(response)
+
+        print("[OK] Response received")
+        print("Response:", data)
+
+        if data.get("type") == "transcription":
+
+            print("\n=== FINAL TRANSCRIPTION ===")
+            print(data.get("text"))
+
+        else:
+
+            print("\n[WARNING] Unknown response type")
 
 
 if __name__ == "__main__":

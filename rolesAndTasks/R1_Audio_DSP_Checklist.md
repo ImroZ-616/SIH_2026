@@ -19,27 +19,27 @@
 - [x] Nyquist theorem
 - [x] Understand: 16,000 samples/sec → speech waveform
 - [x] Install: Python, librosa, numpy, matplotlib, sounddevice
-- [ ] Record your own voice
-- [ ] Visualize waveform
-- [ ] Visualize spectrogram
-- [ ] **Output:** `audio_basics.ipynb` (mic recording + waveform + spectrogram)
+- [x] Record your own voice
+- [x] Visualize waveform
+- [x] Visualize spectrogram
+- [x] **Output:** `audio_basics.ipynb` (mic recording + waveform + spectrogram)
 
 ## Day 2 — Framing & FFT
-- [ ] Framing
-- [ ] Windowing
-- [ ] FFT (Fast Fourier Transform)
-- [ ] Spectrogram generation
-- [ ] Implement: audio → spectrogram (code)
+- [x] Framing
+- [x] Windowing
+- [x] FFT (Fast Fourier Transform)
+- [x] Spectrogram generation
+- [x] Implement: audio → spectrogram (code)
 
 ## Day 3 — MFCC Pipeline (team milestone)
-- [ ] Pre-emphasis
-- [ ] Framing
-- [ ] Windowing
-- [ ] FFT
-- [ ] Mel filterbank
-- [ ] Log
-- [ ] DCT
-- [ ] Implement full pipeline: Audio → Pre-emphasis → Framing → Window → FFT → Mel filterbank → Log → DCT → MFCC
+- [x] Pre-emphasis
+- [x] Framing
+- [x] Windowing
+- [x] FFT
+- [x] Mel filterbank
+- [x] Log
+- [x] DCT
+- [x] Implement full pipeline: Audio → Pre-emphasis → Framing → Window → FFT → Mel filterbank → Log → DCT → MFCC
 
 ## Day 4 — Support R2
 - [ ] Help optimize feature extraction speed/quality for the CNN pipeline
