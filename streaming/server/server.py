@@ -2,6 +2,7 @@ import asyncio
 import json
 import os
 import sys
+import tempfile
 import wave
 
 import websockets
@@ -18,8 +19,6 @@ from asr.server import ASR
 
 HOST = "0.0.0.0"
 PORT = 5050
-
-AUDIO_FILE = "received_audio.wav"
 
 EXPECTED_SAMPLE_RATE = 16000
 EXPECTED_CHANNELS = 1
@@ -44,10 +43,11 @@ def save_wav(
     audio_data,
     sample_rate,
     channels,
-    sample_width
+    sample_width,
+    audio_file
 ):
 
-    with wave.open(AUDIO_FILE, "wb") as wav:
+    with wave.open(audio_file, "wb") as wav:
 
         wav.setnchannels(channels)
         wav.setsampwidth(sample_width)
@@ -56,7 +56,7 @@ def save_wav(
         wav.writeframes(audio_data)
 
     print(
-        f"Audio saved to {AUDIO_FILE}"
+        f"Audio saved to {audio_file}"
     )
 
 
@@ -109,13 +109,23 @@ async def handle_client(websocket):
 
     streaming = False
 
+    # Create a unique temporary WAV file
+    temp_file = tempfile.NamedTemporaryFile(
+        suffix=".wav",
+        delete=False
+    )
+
+    audio_file = temp_file.name
+
+    temp_file.close()
+
+    print(
+        f"Session audio file: {audio_file}"
+    )
+
     try:
 
         async for message in websocket:
-
-            # -------------------------
-            # TEXT MESSAGE
-            # -------------------------
 
             if isinstance(message, str):
 
@@ -124,7 +134,6 @@ async def handle_client(websocket):
                     message
                 )
 
-                # END message
                 if message == "END":
 
                     if not streaming:
@@ -153,31 +162,44 @@ async def handle_client(websocket):
                         audio_buffer,
                         sample_rate,
                         channels,
-                        sample_width
+                        sample_width,
+                        audio_file
                     )
 
                     print(
                         "Running ASR..."
                     )
 
-                    text = await asyncio.to_thread(
-                        asr.transcribe,
-                        AUDIO_FILE
-                    )
+                    try:
 
-                    print(
-                        "Transcription:"
-                    )
+                        text = await asyncio.to_thread(
+                            asr.transcribe,
+                            audio_file
+                        )
 
-                    print(text)
+                        print(
+                            "Transcription:"
+                        )
 
-                    await websocket.send(
-                        "RESULT:" + text
-                    )
+                        print(text)
+
+                        await websocket.send(
+                            "RESULT:" + text
+                        )
+
+                    except Exception as error:
+
+                        print(
+                            "ASR error:",
+                            error
+                        )
+
+                        await websocket.send(
+                            "ERROR: ASR processing failed"
+                        )
 
                     continue
 
-                # Try to parse JSON
                 try:
 
                     data = json.loads(
@@ -191,10 +213,6 @@ async def handle_client(websocket):
                     )
 
                     continue
-
-                # -------------------------
-                # START message
-                # -------------------------
 
                 if data.get("type") == "START":
 
@@ -255,10 +273,6 @@ async def handle_client(websocket):
                         "ERROR: Unknown message type"
                     )
 
-            # -------------------------
-            # BINARY AUDIO
-            # -------------------------
-
             elif isinstance(message, bytes):
 
                 if not streaming:
@@ -274,7 +288,6 @@ async def handle_client(websocket):
 
                     continue
 
-                # Check maximum audio size
                 if (
                     len(audio_buffer)
                     + len(message)
@@ -313,6 +326,18 @@ async def handle_client(websocket):
         print(
             "Client disconnected"
         )
+
+    finally:
+
+        # Remove temporary audio file
+        if os.path.exists(audio_file):
+
+            os.remove(audio_file)
+
+            print(
+                f"Temporary audio file removed: "
+                f"{audio_file}"
+            )
 
 
 async def main():
