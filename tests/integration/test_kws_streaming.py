@@ -1,6 +1,8 @@
 import asyncio
 import sys
 import os
+import time
+
 import sounddevice as sd
 
 sys.path.append(
@@ -11,6 +13,7 @@ sys.path.append(
 
 from streaming.wake_controller import WakeController
 from streaming.client.client import StreamingClient
+from streaming.kws.mock import MockKWS
 
 
 SAMPLE_RATE = 16000
@@ -22,11 +25,16 @@ NETWORK_CHUNK_SIZE = 3200
 
 async def main():
 
-    print("=== EdgeWake R6 KWS → Streaming → ASR Test ===")
+    print("=== EdgeWake R6 KWS → Streaming → ASR Latency Test ===")
 
     controller = WakeController(
         buffer_seconds=BUFFER_SECONDS,
         sample_rate=SAMPLE_RATE
+    )
+
+    kws = MockKWS(
+        sample_rate=SAMPLE_RATE,
+        detection_after_seconds=1.0
     )
 
     client = StreamingClient()
@@ -60,13 +68,22 @@ async def main():
         )
 
         # --------------------------------------------------
-        # 2. Feed continuous audio into WakeController
+        # 2. Feed audio into R6 + KWS
         # --------------------------------------------------
 
-        print("\n[2] Feeding audio into WakeController...")
+        print(
+            "\n[2] Feeding audio into "
+            "WakeController + KWS..."
+        )
 
         wake_index = None
         buffered_audio = None
+
+        # Timing measurements
+        kws_event_time = None
+        wake_handled_time = None
+        first_network_audio_time = None
+        transcription_time = None
 
         for audio_index in range(
             0,
@@ -79,21 +96,35 @@ async def main():
                 audio_index + CHUNK_SIZE
             ]
 
+            # R6 continuously buffers incoming audio
             controller.process_audio(chunk)
 
-            # Simulate KWS detection after 1 second
-            if (
-                audio_index >= SAMPLE_RATE
-                and not controller.streaming
-            ):
+            # KWS independently processes the same chunk
+            detected = kws.process(chunk)
 
-                print("\n[MOCK KWS] Wake word detected!")
+            if detected:
+
+                # ------------------------------------------
+                # KWS event timestamp
+                # ------------------------------------------
+
+                kws_event_time = time.perf_counter()
+
+                print(
+                    "\n[OK] KWS detection event received"
+                )
 
                 wake_index = audio_index
 
+                # ------------------------------------------
+                # R6 wake handling
+                # ------------------------------------------
+
                 buffered_audio = (
-                    controller.wake_detected()
+                    controller.handle_kws_result(True)
                 )
+
+                wake_handled_time = time.perf_counter()
 
                 print(
                     "[OK] Buffered audio:",
@@ -105,7 +136,7 @@ async def main():
 
         if wake_index is None:
             raise RuntimeError(
-                "Mock KWS did not detect wake event"
+                "KWS did not detect wake event"
             )
 
         # --------------------------------------------------
@@ -115,6 +146,8 @@ async def main():
         print("\n[3] Connecting to ASR server...")
 
         await client.connect()
+
+        print("[OK] Connected")
 
         # --------------------------------------------------
         # 4. Start streaming
@@ -132,6 +165,8 @@ async def main():
 
         buffered_bytes = buffered_audio.tobytes()
 
+        first_audio_sent = False
+
         for buffer_index in range(
             0,
             len(buffered_bytes),
@@ -144,6 +179,15 @@ async def main():
             ]
 
             await client.send_audio(chunk)
+
+            # Timestamp the first network audio send
+            if not first_audio_sent:
+
+                first_network_audio_time = (
+                    time.perf_counter()
+                )
+
+                first_audio_sent = True
 
         print("[OK] Buffered audio sent")
 
@@ -172,9 +216,7 @@ async def main():
 
             await client.send_audio(chunk)
 
-        print(
-            "[OK] Post-wake audio sent"
-        )
+        print("[OK] Post-wake audio sent")
 
         # --------------------------------------------------
         # 7. End stream
@@ -194,17 +236,90 @@ async def main():
 
         text = await client.receive_transcription()
 
-        print("\n=== FINAL TRANSCRIPTION ===")
-        print(text)
+        transcription_time = time.perf_counter()
 
         # --------------------------------------------------
-        # 9. Stop wake controller
+        # 9. Calculate latency measurements
+        # --------------------------------------------------
+
+        wake_to_buffer_ms = (
+            wake_handled_time - kws_event_time
+        ) * 1000
+
+        wake_to_network_ms = (
+            first_network_audio_time - kws_event_time
+        ) * 1000
+
+        wake_to_transcription_ms = (
+            transcription_time - kws_event_time
+        ) * 1000
+
+        # --------------------------------------------------
+        # 10. Results
+        # --------------------------------------------------
+
+        print("\n========================================")
+        print("        R6 LATENCY BENCHMARK")
+        print("========================================")
+
+        print("\n[RESULT 1] KWS → R6 wake handling")
+        print(
+            f"{wake_to_buffer_ms:.3f} ms"
+        )
+
+        print("\n[RESULT 2] KWS → first network audio")
+        print(
+            f"{wake_to_network_ms:.3f} ms"
+        )
+
+        print("\n[RESULT 3] KWS → final transcription")
+        print(
+            f"{wake_to_transcription_ms:.3f} ms"
+        )
+
+        print("\n========================================")
+        print("        FINAL TRANSCRIPTION")
+        print("========================================")
+        print(text)
+
+        print("\n========================================")
+        print("        INTERPRETATION")
+        print("========================================")
+
+        print(
+            "KWS → R6 handling:"
+            " local wake-event processing"
+        )
+
+        print(
+            "KWS → first network audio:"
+            " R6 wake handling + WebSocket transmission"
+        )
+
+        print(
+            "KWS → transcription:"
+            " complete current batch-ASR pipeline"
+        )
+
+        print(
+            "\nNOTE:"
+            " MockKWS does not measure real KWS inference latency."
+        )
+
+        print(
+            "The current ASR server performs transcription "
+            "after END, so the final value is NOT true "
+            "continuous streaming-ASR latency."
+        )
+
+        # --------------------------------------------------
+        # 11. Stop R6 streaming state
         # --------------------------------------------------
 
         controller.stop_streaming()
 
         print(
-            "\n=== R6 INTEGRATION TEST COMPLETE ==="
+            "\n=== R6 LATENCY TEST COMPLETE ==="
         )
 
     finally:
