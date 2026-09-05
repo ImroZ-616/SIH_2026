@@ -2,7 +2,9 @@ from faster_whisper import WhisperModel
 
 
 class ASR:
+
     def __init__(self):
+
         print("Loading ASR model...")
 
         self.model = WhisperModel(
@@ -14,7 +16,10 @@ class ASR:
         print("ASR model loaded")
 
     def transcribe(self, audio_file):
-        segments, info = self.model.transcribe(audio_file)
+
+        segments, info = self.model.transcribe(
+            audio_file
+        )
 
         text = ""
 

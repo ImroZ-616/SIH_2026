@@ -1,60 +1,140 @@
+import asyncio
 import json
+import wave
+
 import websockets
 
 
-class StreamingClient:
+SERVER_URI = "ws://127.0.0.1:5050"
 
-    def __init__(self, server_url="ws://127.0.0.1:5050"):
-        self.server_url = server_url
-        self.websocket = None
+AUDIO_FILE = "/Users/shaswatnain/Downloads/test.wav"
 
-    async def connect(self):
-        print("[STREAM] Connecting to ASR server...")
 
-        self.websocket = await websockets.connect(
-            self.server_url
+async def main():
+
+    print(
+        "Connecting to R4 server..."
+    )
+
+    async with websockets.connect(
+        SERVER_URI
+    ) as websocket:
+
+        print(
+            "Connected to R4 server"
         )
 
-        print("[STREAM] Connected")
+        # -------------------------
+        # START + AUDIO METADATA
+        # -------------------------
 
-    async def start(self):
-        if self.websocket is None:
-            raise RuntimeError("Client is not connected")
+        start_message = {
 
-        await self.websocket.send("START")
+            "type": "START",
 
-        print("[STREAM] Stream started")
+            "sample_rate": 16000,
 
-    async def send_audio(self, audio):
-        if self.websocket is None:
-            raise RuntimeError("Client is not connected")
+            "channels": 1,
 
-        await self.websocket.send(audio)
+            "sample_width": 2,
 
-    async def stop(self):
-        if self.websocket is None:
-            raise RuntimeError("Client is not connected")
+            "encoding": "PCM16"
+        }
 
-        await self.websocket.send("END")
+        await websocket.send(
+            json.dumps(start_message)
+        )
 
-        print("[STREAM] Stream ended")
+        print(
+            "START sent with audio metadata"
+        )
 
-    async def receive_transcription(self):
-        if self.websocket is None:
-            raise RuntimeError("Client is not connected")
+        # Wait for server confirmation
 
-        response = await self.websocket.recv()
+        ready = await websocket.recv()
 
-        data = json.loads(response)
+        print(
+            "Server response:",
+            ready
+        )
 
-        if data.get("type") == "transcription":
-            return data.get("text", "")
+        if ready != "READY":
 
-        return None
+            print(
+                "Server did not accept "
+                "the audio stream"
+            )
 
-    async def close(self):
-        if self.websocket is not None:
-            await self.websocket.close()
-            self.websocket = None
+            return
 
-            print("[STREAM] Connection closed")
+        # -------------------------
+        # SEND AUDIO
+        # -------------------------
+
+        with wave.open(
+            AUDIO_FILE,
+            "rb"
+        ) as audio:
+
+            print(
+                "Sending real audio..."
+            )
+
+            while True:
+
+                # 3200 samples
+                # = 200 ms at 16 kHz
+
+                chunk = audio.readframes(
+                    3200
+                )
+
+                if not chunk:
+
+                    break
+
+                await websocket.send(
+                    chunk
+                )
+
+                print(
+                    f"Sent audio chunk: "
+                    f"{len(chunk)} bytes"
+                )
+
+        # -------------------------
+        # END
+        # -------------------------
+
+        await websocket.send(
+            "END"
+        )
+
+        print(
+            "END sent"
+        )
+
+        # -------------------------
+        # RECEIVE ASR RESULT
+        # -------------------------
+
+        print(
+            "Waiting for ASR result..."
+        )
+
+        result = await websocket.recv()
+
+        print(
+            "Server response:"
+        )
+
+        print(result)
+
+    print(
+        "Connection closed"
+    )
+
+
+if __name__ == "__main__":
+
+    asyncio.run(main())
