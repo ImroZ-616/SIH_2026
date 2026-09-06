@@ -28,21 +28,21 @@
 - [x] Build a comparison table: ESP8266 vs ESP32 vs ESP32-S3 vs Raspberry Pi (RAM, Flash, suitability)
 
 ## Day 3 — Feasibility Research
-- [ ] Research whether the chosen MFCC implementation can eventually run efficiently on an MCU
+- [x] Research whether the chosen MFCC implementation can eventually run efficiently on an MCU
 
 ## Day 4 — TFLite Conversion Research
-- [ ] Research TensorFlow Lite conversion process
-- [ ] Do NOT deploy to hardware yet
+- [x] Research TensorFlow Lite conversion process
+- [x] Do NOT deploy to hardware yet
 
 ## Day 5 — Live Microphone Milestone
-- [ ] Observe the laptop-based KWS demo — note what will need to change for MCU deployment later
+- [x] Observe the laptop-based KWS demo — note what will need to change for MCU deployment later
 
 ## Day 6 — False Activation Testing
-- [ ] Support the team's negative testing effort where relevant to embedded constraints
+- [x] Support the team's negative testing effort where relevant to embedded constraints
 
 ## Day 7 — Integration Day
-- [ ] Confirm ESP32 → serial monitor pipeline still works
-- [ ] Prep notes for Week 2: quantization → TFLite Micro → ESP32-S3 deployment
+- [x] Confirm ESP32 → serial monitor pipeline still works
+- [x] Prep notes for Week 2: quantization → TFLite Micro → ESP32-S3 deployment
 
 ---
 ### End-of-day rule
