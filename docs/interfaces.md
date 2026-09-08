@@ -1,45 +1,58 @@
 # EdgeWake System Integration Interfaces
 
 **Project:** SIH 26172 — Low Latency and Efficient Voice Activator for Edge Devices
-
+**System:** EdgeWake / ASTRAEDGE
 **Owner:** R6 — Integration/System Engineer
 
 ---
 
-## Purpose
+## 1. Purpose
 
 This document defines the interfaces between the major components of the
 EdgeWake system.
 
-The goal is to ensure that independently developed modules can be connected
-without ambiguity.
+The objective is to allow R1, R2, R3, R4 and R5 components to be integrated
+without changing their internal implementations.
 
-No parameter should be considered final unless it is verified against the
-actual implementation and training configuration.
+The interfaces described here define the current integration baseline.
+Parameters are considered final only after verification against the actual
+implementation, trained model and target hardware.
 
 ---
 
-# 1. End-to-End Pipeline
+## 2. End-to-End Interface Flow
 
 ```text
 Microphone
-    ↓
+    │
+    ▼
 Audio Capture
-    ↓
-PCM Audio
-    ↓
+    │
+    │ PCM audio
+    ▼
 Audio Preprocessing
-    ↓
-Feature Extraction
-    ↓
-KWS Model
-    ↓
-Wake Decision
-    ↓
-Ring Buffer
-    ↓
-Audio Streaming
-    ↓
-ASR Server
-    ↓
-Text
+    │
+    ▼
+KWS Feature Extraction
+    │
+    ▼
+KWS Detector
+    │
+    │ detected = True
+    ▼
+WakeController
+    │
+    ├──────────────► Ring Buffer
+    │
+    ▼
+Streaming Client
+    │
+    │ WebSocket
+    ▼
+Streaming Server
+    │
+    ▼
+ASR Engine
+    │
+    ▼
+Transcription
